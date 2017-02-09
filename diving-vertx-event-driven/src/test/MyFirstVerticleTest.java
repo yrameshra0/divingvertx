@@ -1,13 +1,18 @@
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.rxjava.core.RxHelper;
+import io.vertx.rxjava.core.Vertx;
+import io.vertx.rxjava.core.http.HttpClient;
+import io.vertx.rxjava.core.http.HttpClientResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import rx.Observable;
+import rx.functions.Action1;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -24,9 +29,7 @@ public class MyFirstVerticleTest {
     @Before
     public void setUp(TestContext context) throws Exception {
         vertx = Vertx.vertx();
-        vertx.exceptionHandler(context.exceptionHandler());
-        vertx.deployVerticle(new MyFirstVerticle(), createDeploymentOptions(), context.asyncAssertSuccess());
-        vertx.deployVerticle(new ReadVerticle());
+        vertx.deployVerticle(MyFirstVerticle.class.getName(), createDeploymentOptions(), context.asyncAssertSuccess());
     }
 
     private DeploymentOptions createDeploymentOptions() throws IOException {
@@ -45,15 +48,39 @@ public class MyFirstVerticleTest {
 
     @Test(timeout = 1000L)
     public void hello_world_from_my_first_verticle(TestContext context) throws Exception {
-        Async async = context.async();
-        vertx.createHttpClient().getNow(port, "localhost", "/", response->{
-           context.assertEquals(response.statusCode(), 200);
-           context.assertEquals(response.headers().get("content-type"), "text/html;charset=UTF-8");
+        vertx.deployVerticle(ReadVerticle.class.getName()); // Registering ReadVerticle
 
-           response.bodyHandler(body->{
-               context.assertEquals(body.toString(), "<h1>HELLO THERE FROM -> READ VERTICLE !!</h1>");
-               async.complete();
-           });
-        });
+        Async async = context.async();
+        Observable<HttpClientResponse> responseObservable = fetchHttpClientResponseForIndexPage();
+        Action1<HttpClientResponse> successResponse = assertIndexSuccessResponse(context, async);
+        responseObservable.subscribe(successResponse);
+    }
+
+    private Observable<HttpClientResponse> fetchHttpClientResponseForIndexPage() {
+        HttpClient httpClient = vertx.createHttpClient();
+        return RxHelper.get(httpClient, port, "localhost", "/");
+    }
+
+    private Action1<HttpClientResponse> assertIndexSuccessResponse(TestContext context, Async async) {
+        return response -> {
+            context.assertEquals(response.statusCode(), 200);
+            context.assertEquals(response.headers().get("content-type"), "text/html;charset=UTF-8");
+
+            response.bodyHandler(body -> {
+                context.assertEquals(body.toString(), "<h1>HELLO THERE FROM -> READ VERTICLE !!</h1>");
+                async.complete();
+            });
+        };
+    }
+
+    @Test
+    public void fail_when_no_service_verticle_registered(TestContext context) throws Exception {
+        Async async = context.async();
+        Observable<HttpClientResponse> responseObservable = fetchHttpClientResponseForIndexPage();
+        Action1<HttpClientResponse> errorResponse = response -> {
+            context.assertEquals(response.statusCode(), 500);
+            async.complete();
+        };
+        responseObservable.subscribe(errorResponse);
     }
 }

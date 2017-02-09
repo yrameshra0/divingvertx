@@ -23,13 +23,11 @@ public class ReadVerticleTest {
         Async async = context.async();
         vertx.eventBus()
                 .sendObservable("READ_FROM_ME", null)
-                .subscribe(assertReplyFromReadVerticle(context, async));
+                .subscribe(response -> assertReplyFromReadVerticle(response, context, async));
     }
 
-    private Action1<Message<Object>> assertReplyFromReadVerticle(TestContext context, Async async) {
-        return response -> {
-            context.assertEquals(response.body().toString(), "HELLO THERE FROM ME");
-            async.complete();
-        };
+    private void assertReplyFromReadVerticle(Message<Object> response, TestContext context, Async async) {
+        context.assertEquals(response.body().toString(), "HELLO THERE FROM -> READ VERTICLE !!");
+        async.complete();
     }
 }

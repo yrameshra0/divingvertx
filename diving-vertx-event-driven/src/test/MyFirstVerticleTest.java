@@ -24,7 +24,9 @@ public class MyFirstVerticleTest {
     @Before
     public void setUp(TestContext context) throws Exception {
         vertx = Vertx.vertx();
+        vertx.exceptionHandler(context.exceptionHandler());
         vertx.deployVerticle(new MyFirstVerticle(), createDeploymentOptions(), context.asyncAssertSuccess());
+        vertx.deployVerticle(new ReadVerticle());
     }
 
     private DeploymentOptions createDeploymentOptions() throws IOException {
@@ -49,7 +51,7 @@ public class MyFirstVerticleTest {
            context.assertEquals(response.headers().get("content-type"), "text/html;charset=UTF-8");
 
            response.bodyHandler(body->{
-               context.assertTrue(body.toString().contains("<h1> My First Verticle </h1>"));
+               context.assertEquals(body.toString(), "<h1>HELLO THERE FROM -> READ VERTICLE !!</h1>");
                async.complete();
            });
         });

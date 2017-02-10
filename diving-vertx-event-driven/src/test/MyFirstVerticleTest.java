@@ -1,10 +1,14 @@
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.rxjava.core.RxHelper;
 import io.vertx.rxjava.core.Vertx;
+import io.vertx.rxjava.core.eventbus.SendContext;
 import io.vertx.rxjava.core.http.HttpClient;
 import io.vertx.rxjava.core.http.HttpClientResponse;
 import org.junit.After;
@@ -21,6 +25,12 @@ import java.net.ServerSocket;
 public class MyFirstVerticleTest {
     private Vertx vertx;
     private Integer port;
+    private static final Logger LOGGER = LoggerFactory.getLogger(MyFirstVerticleTest.class);
+    private static final Handler<SendContext> LOG_INTERCEPTOR = interceptor -> {
+        LOGGER.info(String.format("TO ADDRESS => %s, ", interceptor.message().address()));
+        LOGGER.info(String.format("BODY INFO=> %s ", interceptor.message().body()));
+        interceptor.next();
+    };
 
     /**
      * Before actually going ahead and executing the tests the Verticle under test should be
@@ -29,6 +39,7 @@ public class MyFirstVerticleTest {
     @Before
     public void setUp(TestContext context) throws Exception {
         vertx = Vertx.vertx();
+        vertx.eventBus().addInterceptor(LOG_INTERCEPTOR);
         vertx.deployVerticle(MyFirstVerticle.class.getName(), createDeploymentOptions(), context.asyncAssertSuccess());
     }
 
@@ -44,6 +55,7 @@ public class MyFirstVerticleTest {
     @After
     public void tearDown(TestContext context) throws Exception {
         vertx.close(context.asyncAssertSuccess());
+        vertx.eventBus().removeInterceptor(LOG_INTERCEPTOR);
     }
 
     @Test(timeout = 1000L)

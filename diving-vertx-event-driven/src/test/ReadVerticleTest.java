@@ -1,12 +1,11 @@
-import io.vertx.rxjava.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.rxjava.core.Vertx;
 import io.vertx.rxjava.core.eventbus.Message;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import rx.functions.Action1;
 
 @RunWith(VertxUnitRunner.class)
 public class ReadVerticleTest {

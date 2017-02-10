@@ -77,7 +77,6 @@ public class MyFirstVerticleTest {
         return response -> {
             context.assertEquals(response.statusCode(), 200);
             context.assertEquals(response.headers().get("content-type"), "text/html;charset=UTF-8");
-
             response.bodyHandler(body -> {
                 context.assertEquals(body.toString(), "<h1>HELLO THERE FROM -> READ VERTICLE !!</h1>");
                 async.complete();

@@ -7,8 +7,9 @@ public class ReadVerticle extends AbstractVerticle {
     @Override
     public void start(Future<Void> startFuture) throws Exception {
         MessageConsumer<Object> consumer = vertx.eventBus().consumer("READ_FROM_ME");
-        consumer.handler(handler -> {
-            handler.reply("HELLO THERE FROM -> READ VERTICLE !!");
+
+        consumer.toObservable().subscribe(listener -> {
+            listener.reply("HELLO THERE FROM -> READ VERTICLE !!");
             // Done primarily because of this issue -- https://github.com/eclipse/vert.x/issues/1625
             consumer.unregister();
         });

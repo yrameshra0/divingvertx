@@ -1,4 +1,5 @@
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -49,6 +50,7 @@ public class MyFirstVerticleTest {
         port = socket.getLocalPort();
         socket.close();
 
+        Observable
         return new DeploymentOptions().setConfig(new JsonObject().put("http.port", port));
     }
 
